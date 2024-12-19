@@ -74,25 +74,21 @@ func ProcessII(all []byte) {
 		n := len(buf)
 
 		if active {
-			temp := 4096 - pointer
-			if pointer < 4 {
-				copy(header[temp:], buf[:4-temp])
-				pointer = 4 - pointer
-				temp = 0
-			} else {
-				pointer = 0
+			temp := pointer //koliko je zapisano podataka u prenosu
+			pointer = 0
+
+			if temp < 4 {
+				fmt.Println("?")
+				temp += copy(header[temp:], buf[:4-temp])
+				pointer = 4 - temp
 			}
 
 			end := client.DecodeLength(header)
-			// fmt.Println(buf[pointer : end-temp+4])
-			copy(slabBloc[temp-4:], buf[pointer:end-temp+4])
-			pointer += end - temp + 4
+			copy(slabBloc[temp:], buf[pointer:end-temp+4])
+			pointer += end - temp
 		}
 
-		//30 0 0 0 83 8 0 0 0 0 12 0 0 0 66 99 77 87 55 80 79 108 69 116 97 111 101 77 73 118
-
 		for {
-			var end int
 			if !active {
 				if pointer+4 > n {
 					copy(header, buf[pointer:])
@@ -103,11 +99,13 @@ func ProcessII(all []byte) {
 					copy(header, buf[pointer:pointer+4])
 				}
 
-				end = pointer + client.DecodeLength(buf[pointer:pointer+4]) + 4
+				end := pointer + client.DecodeLength(buf[pointer:pointer+4]) + 4
 
 				slabBloc = make([]byte, 64)
 				if end > n {
-					copy(slabBloc, buf[pointer+4:])
+					pointer += 4
+					copy(slabBloc, buf[pointer:])
+					pointer = n - pointer
 					active = true
 					break
 				}
