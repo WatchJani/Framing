@@ -19,6 +19,9 @@ func main() {
 		os.Exit(1)
 	}
 
+	// msg := string([]byte{66, 99, 77, 87, 55, 80, 79, 108, 69, 116, 97, 111, 101, 77, 73, 118, 72, 83, 66, 52})
+	// fmt.Println(msg)
+
 	payload := make([][]byte, 0, 2)
 
 	var start int
@@ -69,17 +72,23 @@ func ProcessII(all []byte) {
 		n := len(buf)
 
 		if active {
-			temp := pointer
+			temp := 4096 - pointer
 			if pointer < 4 {
 				copy(header[temp:], buf[:4-temp])
 				pointer = 4 - pointer
 				temp = 0
+			} else {
+				pointer = 0
 			}
 
 			end := client.DecodeLength(header)
-			copy(slabBloc[temp:], buf[pointer:end])
+			// fmt.Println(buf[pointer : end-temp+4])
+			copy(slabBloc[:temp], buf[pointer:end-temp+4])
+			pointer += end - temp + 4
 			active = false
 		}
+
+		//30 0 0 0 83 8 0 0 0 0 12 0 0 0 66 99 77 87 55 80 79 108 69 116 97 111 101 77 73 118
 
 		for {
 			var end int
@@ -89,6 +98,8 @@ func ProcessII(all []byte) {
 					pointer = n - pointer
 					active = true
 					break
+				} else {
+					copy(header, buf[pointer:pointer+4])
 				}
 
 				end = pointer + client.DecodeLength(buf[pointer:pointer+4]) + 4
@@ -125,6 +136,8 @@ func Read(all []byte) [][]byte {
 
 	return f
 }
+
+// var counter int
 
 func Req(buf []byte) {
 	_, key, _, body := client.Decode(buf)
