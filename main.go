@@ -20,7 +20,9 @@ func main() {
 	}
 
 	// msg := string([]byte{66, 99, 77, 87, 55, 80, 79, 108, 69, 116, 97, 111, 101, 77, 73, 118, 72, 83, 66, 52})
-	// fmt.Println(msg)
+	// fmt.Println("test", msg)
+
+	// BcMW7POlEtaoeMIvHSB4
 
 	payload := make([][]byte, 0, 2)
 
@@ -83,9 +85,8 @@ func ProcessII(all []byte) {
 
 			end := client.DecodeLength(header)
 			// fmt.Println(buf[pointer : end-temp+4])
-			copy(slabBloc[:temp], buf[pointer:end-temp+4])
+			copy(slabBloc[temp-4:], buf[pointer:end-temp+4])
 			pointer += end - temp + 4
-			active = false
 		}
 
 		//30 0 0 0 83 8 0 0 0 0 12 0 0 0 66 99 77 87 55 80 79 108 69 116 97 111 101 77 73 118
@@ -106,18 +107,46 @@ func ProcessII(all []byte) {
 
 				slabBloc = make([]byte, 64)
 				if end > n {
-					copy(slabBloc, buf[pointer:])
+					copy(slabBloc, buf[pointer+4:])
 					active = true
 					break
 				}
 
 				copy(slabBloc, buf[pointer+4:end])
+				pointer = end
 			}
 
 			Req(slabBloc)
-			pointer = end
+			active = false
 		}
+	}
 
+	data, err := os.ReadFile("./test_data.bin")
+	if err != nil {
+		log.Println(err)
+	}
+
+	payload := make([][]byte, 0, 2)
+
+	var start int
+	for index := range data {
+		if data[index] == '\n' {
+			payload = append(payload, data[start:index])
+			start = index + 1
+		}
+	}
+
+	testRealData := make([]string, 0, len(payload)/2)
+	for index := 0; index < len(payload); index += 2 {
+		testRealData = append(testRealData, string(payload[index])+string(payload[index+1]))
+	}
+
+	// fmt.Println(testRealData)
+
+	for index, value := range testRealData {
+		if value != test[index] {
+			fmt.Println(index, "|", value, "|", test[index])
+		}
 	}
 }
 
@@ -139,10 +168,14 @@ func Read(all []byte) [][]byte {
 
 // var counter int
 
+var test []string
+
 func Req(buf []byte) {
 	_, key, _, body := client.Decode(buf)
 	headerSize := 10
-	fmt.Println(string(buf[headerSize : headerSize+int(key)+int(body)]))
+	// fmt.Println(string(buf[headerSize : headerSize+int(key)+int(body)]))
+	// fmt.Println(string(buf[headerSize : headerSize+int(key)+int(body)]))
+	test = append(test, string(buf[headerSize:headerSize+int(key)+int(body)]))
 }
 
 func CreateReq(msg [][]byte) ([]byte, error) {
