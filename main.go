@@ -13,18 +13,13 @@ var (
 )
 
 func main() {
-	data, err := os.ReadFile("./test_data.bin")
+	data, err := os.ReadFile("./key_test.bin")
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
 	}
 
-	// msg := string([]byte{66, 99, 77, 87, 55, 80, 79, 108, 69, 116, 97, 111, 101, 77, 73, 118, 72, 83, 66, 52})
-	// fmt.Println("test", msg)
-
-	// BcMW7POlEtaoeMIvHSB4
-
-	payload := make([][]byte, 0, 2)
+	payload := make([][]byte, 0)
 
 	var start int
 	for index := range data {
@@ -56,7 +51,6 @@ func ProcessI(buf []byte) {
 		}
 
 		end := pointer + client.DecodeLength(buf[pointer:pointer+4]) + 4
-		// fmt.Println(end)
 		Req(buf[pointer+4 : end])
 		pointer = end
 	}
@@ -78,9 +72,9 @@ func ProcessII(all []byte) {
 			pointer = 0
 
 			if temp < 4 {
-				fmt.Println("?")
-				temp += copy(header[temp:], buf[:4-temp])
 				pointer = 4 - temp
+				temp += copy(header[temp:], buf[:pointer])
+				temp = 0
 			}
 
 			end := client.DecodeLength(header)
@@ -101,16 +95,15 @@ func ProcessII(all []byte) {
 
 				end := pointer + client.DecodeLength(buf[pointer:pointer+4]) + 4
 
-				slabBloc = make([]byte, 64)
+				slabBloc = make([]byte, 4096)
+				pointer += 4
 				if end > n {
-					pointer += 4
 					copy(slabBloc, buf[pointer:])
 					pointer = n - pointer
 					active = true
 					break
 				}
-
-				copy(slabBloc, buf[pointer+4:end])
+				copy(slabBloc, buf[pointer:end])
 				pointer = end
 			}
 
@@ -119,7 +112,7 @@ func ProcessII(all []byte) {
 		}
 	}
 
-	data, err := os.ReadFile("./test_data.bin")
+	data, err := os.ReadFile("./key_test.bin")
 	if err != nil {
 		log.Println(err)
 	}
@@ -138,8 +131,6 @@ func ProcessII(all []byte) {
 	for index := 0; index < len(payload); index += 2 {
 		testRealData = append(testRealData, string(payload[index])+string(payload[index+1]))
 	}
-
-	// fmt.Println(testRealData)
 
 	for index, value := range testRealData {
 		if value != test[index] {
@@ -171,8 +162,7 @@ var test []string
 func Req(buf []byte) {
 	_, key, _, body := client.Decode(buf)
 	headerSize := 10
-	// fmt.Println(string(buf[headerSize : headerSize+int(key)+int(body)]))
-	// fmt.Println(string(buf[headerSize : headerSize+int(key)+int(body)]))
+
 	test = append(test, string(buf[headerSize:headerSize+int(key)+int(body)]))
 }
 
@@ -185,17 +175,10 @@ func CreateReq(msg [][]byte) ([]byte, error) {
 
 	for index := 0; index < len(msg); index += 2 {
 		payload, err := client.Set(msg[index], msg[index+1], 0)
-		// fmt.Println("[payload length]", len(payload))
 		if err != nil {
 			return nil, err
 		}
 
-		// fmt.Printf("[encoded value] ")
-		// fmt.Println(client.Decode(payload))
-
-		// copy(superRider[pointer:], payload)
-
-		// pointer += len(payload)
 		superRider = append(superRider, payload...)
 	}
 
