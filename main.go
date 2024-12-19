@@ -13,10 +13,25 @@ var (
 )
 
 func main() {
-	payload := [][]byte{
-		[]byte("key\n"), []byte("value\n"),
-		[]byte("uper key start\n"), []byte("super key value\n"),
+	data, err := os.ReadFile("./test_data.bin")
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
 	}
+
+	payload := make([][]byte, 0, 2)
+
+	var start int
+	for index := range data {
+		if data[index] == '\n' {
+			payload = append(payload, data[start:index])
+			start = index + 1
+		}
+	}
+
+	fmt.Println(payload)
+
+	return
 
 	superRider, err := CreateReq(payload)
 	if err != nil {
