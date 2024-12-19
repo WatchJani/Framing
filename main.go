@@ -29,10 +29,6 @@ func main() {
 		}
 	}
 
-	fmt.Println(payload)
-
-	return
-
 	superRider, err := CreateReq(payload)
 	if err != nil {
 		log.Println(err)
@@ -40,7 +36,6 @@ func main() {
 	}
 
 	ProcessII(superRider)
-	// fmt.Println(string(superRider))
 }
 
 // stage I
@@ -101,6 +96,7 @@ func ProcessII(all []byte) {
 				slabBloc = make([]byte, 64)
 				if end > n {
 					copy(slabBloc, buf[pointer:])
+					active = true
 					break
 				}
 
@@ -123,6 +119,7 @@ func Read(all []byte) [][]byte {
 		if end > len(all) {
 			end = len(all)
 		}
+
 		f = append(f, all[index:end])
 	}
 
@@ -130,7 +127,9 @@ func Read(all []byte) [][]byte {
 }
 
 func Req(buf []byte) {
-	// fmt.Println(string(buf))
+	_, key, _, body := client.Decode(buf)
+	headerSize := 10
+	fmt.Println(string(buf[headerSize : headerSize+int(key)+int(body)]))
 }
 
 func CreateReq(msg [][]byte) ([]byte, error) {
@@ -142,13 +141,13 @@ func CreateReq(msg [][]byte) ([]byte, error) {
 
 	for index := 0; index < len(msg); index += 2 {
 		payload, err := client.Set(msg[index], msg[index+1], 0)
-		fmt.Println("[payload length]", len(payload))
+		// fmt.Println("[payload length]", len(payload))
 		if err != nil {
 			return nil, err
 		}
 
-		fmt.Printf("[encoded value] ")
-		fmt.Println(client.Decode(payload))
+		// fmt.Printf("[encoded value] ")
+		// fmt.Println(client.Decode(payload))
 
 		// copy(superRider[pointer:], payload)
 

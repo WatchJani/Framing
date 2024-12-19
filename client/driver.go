@@ -84,7 +84,15 @@ func Encode(operation byte, key, value []byte, ttl int) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func Decode(payload []byte) (uint32, byte, uint32, uint32, uint32) {
+// operation
+// key length
+// ttl - 4 byte
+// payload - 4 byte
+func Decode(payload []byte) (byte, uint32, uint32, uint32) {
+	return payload[0], uint32(payload[1]), LittleEndian(payload[2:6]), LittleEndian(payload[6:10])
+}
+
+func TestDecode(payload []byte) (uint32, byte, uint32, uint32, uint32) {
 	return LittleEndian(payload[:4]), payload[4], uint32(payload[5]), LittleEndian(payload[6:10]), LittleEndian(payload[10:14])
 }
 
