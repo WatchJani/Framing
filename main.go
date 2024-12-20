@@ -12,8 +12,12 @@ var (
 	ErrWrongInput = errors.New("wrong input")
 )
 
+const (
+	TestDataInput = "./key_test.bin"
+)
+
 func main() {
-	data, err := os.ReadFile("./key_test.bin")
+	data, err := os.ReadFile(TestDataInput)
 	if err != nil {
 		log.Println(err)
 		os.Exit(1)
@@ -68,16 +72,23 @@ func ProcessII(all []byte) {
 		n := len(buf)
 
 		if active {
-			temp := pointer //koliko je zapisano podataka u prenosu
+			temp := pointer
 			pointer = 0
 
+			var end int
 			if temp < 4 {
 				pointer = 4 - temp
 				temp += copy(header[temp:], buf[:pointer])
 				temp = 0
+
+				end = client.DecodeLength(header)
+
+				//i need end for the slabBlock allocation
+				slabBloc = make([]byte, 4096)
+			} else {
+				end = client.DecodeLength(header)
 			}
 
-			end := client.DecodeLength(header)
 			copy(slabBloc[temp:], buf[pointer:end-temp+4])
 			pointer += end - temp
 		}
@@ -112,7 +123,7 @@ func ProcessII(all []byte) {
 		}
 	}
 
-	data, err := os.ReadFile("./key_test.bin")
+	data, err := os.ReadFile(TestDataInput)
 	if err != nil {
 		log.Println(err)
 	}
